@@ -1542,6 +1542,9 @@ html[data-theme='dark'] {
   position: sticky;
   top: 18px;
 }
+.detail-main {
+  max-width: 700px;
+}
 .detail-main h2 {
   font-size: 28px;
   line-height: 1.25;
