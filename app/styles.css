@@ -1534,16 +1534,13 @@ html[data-theme='dark'] {
 /* Detail two-column layout with a properties card */
 .detail-layout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr minmax(300px, 320px);
   gap: 32px;
   align-items: start;
 }
 .detail-side {
   position: sticky;
   top: 18px;
-}
-.detail-main {
-  max-width: 640px;
 }
 .detail-main h2 {
   font-size: 28px;
@@ -1655,6 +1652,9 @@ html[data-theme='dark'] {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 12px;
+}
+.detail-side .props-card + .props-card {
+  margin-top: 16px;
 }
 .props-card ul {
   list-style: none;
