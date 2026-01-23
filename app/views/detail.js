@@ -1,5 +1,8 @@
 // Issue Detail view implementation (lit-html based)
 import { html, render } from 'lit-html';
+import { ref } from 'lit-html/directives/ref.js';
+import mermaid from 'mermaid';
+import svgPanZoom from 'svg-pan-zoom';
 import { parseView } from '../router.js';
 import { issueHashFor } from '../utils/issue-url.js';
 import { debug } from '../utils/logging.js';
@@ -115,6 +118,14 @@ export function createDetailView(
   let comment_pending = false;
   /** @type {'overview'|'dependencies'} */
   let active_tab = 'overview';
+  /** @type {'list'|'graph'} */
+  let deps_view_mode = 'list';
+  /** @type {string | null} */
+  let graph_diagram = null;
+  /** @type {boolean} */
+  let graph_loading = false;
+  /** @type {HTMLElement | null} */
+  let graph_container = null;
 
   /** @type {HTMLDialogElement | null} */
   let delete_dialog = null;
@@ -863,10 +874,322 @@ export function createDetailView(
   };
 
   /**
+   * @param {'list'|'graph'} mode
+   */
+  const onViewModeClick = (mode) => {
+    return (/** @type {Event} */ e) => {
+      e.preventDefault();
+      deps_view_mode = mode;
+      log(
+        'view mode changed to %s, graph_diagram=%s, graph_loading=%s',
+        mode,
+        graph_diagram,
+        graph_loading
+      );
+      if (mode === 'graph' && !graph_diagram && !graph_loading) {
+        void fetchAndRenderGraph();
+      }
+      doRender();
+    };
+  };
+
+  /**
+   * @param {Element | undefined} el
+   */
+  function graphContainerRef(el) {
+    log(
+      'graphContainerRef called: el=%s, graph_diagram=%s, graph_loading=%s',
+      el,
+      graph_diagram,
+      graph_loading
+    );
+    if (el) {
+      graph_container = /** @type {HTMLElement} */ (el);
+      if (graph_diagram && !graph_loading) {
+        log('scheduling renderMermaid after microtask');
+        queueMicrotask(() => {
+          void renderMermaid();
+        });
+      }
+    } else {
+      graph_container = null;
+    }
+  }
+
+  async function renderMermaid() {
+    if (!graph_container || !graph_diagram) {
+      log(
+        'renderMermaid early return: container=%s, diagram=%s',
+        !!graph_container,
+        !!graph_diagram
+      );
+      return;
+    }
+    log('renderMermaid starting with %d chars', graph_diagram.length);
+    const isDark =
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--bg')
+        .trim() === '#0b1021';
+
+    try {
+      await mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        themeVariables: {
+          primaryColor: isDark ? '#1a1f2e' : '#fafafa',
+          primaryTextColor: isDark ? '#e5e7eb' : '#222',
+          primaryBorderColor: isDark ? '#374151' : '#e5e7eb',
+          lineColor: isDark ? '#6b7280' : '#9ca3af',
+          secondaryColor: isDark ? '#1e293b' : '#f9fafb',
+          tertiaryColor: isDark ? '#0f172a' : '#ffffff',
+          background: isDark ? '#0b1021' : '#ffffff',
+          mainBkg: isDark ? '#1a1f2e' : '#fafafa',
+          secondBkg: isDark ? '#1e293b' : '#f3f4f6',
+          textColor: isDark ? '#e5e7eb' : '#222',
+          border1: isDark ? '#374151' : '#e5e7eb',
+          border2: isDark ? '#4b5563' : '#d1d5db',
+          fontSize: '14px',
+          fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+        }
+      });
+      const graphId = `dep-graph-${Date.now()}`;
+      const { svg } = await mermaid.render(graphId, graph_diagram);
+      graph_container.innerHTML = svg;
+
+      const svgElement = graph_container.querySelector('svg');
+      if (svgElement) {
+        svgElement.removeAttribute('width');
+        svgElement.removeAttribute('height');
+        svgElement.removeAttribute('style');
+
+        svgElement.style.display = 'block';
+        svgElement.style.width = '100%';
+        svgElement.style.height = '100%';
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const bbox = svgElement.getBoundingClientRect();
+            if (bbox.width === 0 || bbox.height === 0) {
+              log('SVG has no dimensions, skipping pan/zoom initialization');
+              return;
+            }
+
+            const panZoom = svgPanZoom(svgElement, {
+              zoomEnabled: true,
+              controlIconsEnabled: true,
+              fit: true,
+              center: true,
+              minZoom: 0.1,
+              maxZoom: 10,
+              refreshRate: 'auto'
+            });
+
+            requestAnimationFrame(() => {
+              panZoom.resize();
+              panZoom.fit();
+              panZoom.center();
+            });
+          });
+        });
+
+        svgElement.querySelectorAll('.node').forEach((node) => {
+          const text = node.textContent?.trim();
+          if (text) {
+            const match = text.match(/\b([A-Za-z]+-[a-z0-9]+)\b/i);
+            if (match) {
+              const issueId = match[1];
+              /** @type {HTMLElement} */ (node).style.cursor = 'pointer';
+
+              if (issueId === current_id) {
+                const rect = node.querySelector('rect');
+                if (rect) {
+                  rect.style.stroke = isDark ? '#3b82f6' : '#2563eb';
+                  rect.style.strokeWidth = '3px';
+                  rect.style.filter =
+                    'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))';
+                }
+              }
+
+              let mouseDownPos = { x: 0, y: 0 };
+              let isDragging = false;
+
+              node.addEventListener('mousedown', (e) => {
+                const me = /** @type {MouseEvent} */ (e);
+                mouseDownPos = { x: me.clientX, y: me.clientY };
+                isDragging = false;
+              });
+
+              node.addEventListener('mousemove', (e) => {
+                const me = /** @type {MouseEvent} */ (e);
+                const deltaX = Math.abs(me.clientX - mouseDownPos.x);
+                const deltaY = Math.abs(me.clientY - mouseDownPos.y);
+                if (deltaX > 5 || deltaY > 5) {
+                  isDragging = true;
+                }
+              });
+
+              node.addEventListener('click', (e) => {
+                if (!isDragging) {
+                  e.stopPropagation();
+                  const href = issueHref(issueId);
+                  navigateFn(href);
+                }
+              });
+            }
+          }
+        });
+      }
+    } catch (err) {
+      log('mermaid render error %o', err);
+      if (graph_container) {
+        graph_container.innerHTML =
+          '<p class="muted">Failed to render graph</p>';
+      }
+    }
+  }
+
+  /**
+   * Merge two mermaid flowchart diagrams into one.
+   *
+   * @param {string} deps - Dependencies diagram (will reverse arrows)
+   * @param {string} dependents - Dependents diagram (keep arrows as-is)
+   * @returns {string} - Merged diagram
+   */
+  function mergeMermaidDiagrams(deps, dependents) {
+    const nodes = new Set();
+    const edges = new Set();
+
+    const depsLines = deps.split('\n');
+    depsLines.forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('flowchart')) {
+        return;
+      }
+      if (trimmed.length > 0) {
+        if (trimmed.includes('-->')) {
+          const reversed = trimmed.replace(/(\S+)\s+-->\s+(\S+)/, '$2 --> $1');
+          edges.add(reversed);
+        } else {
+          nodes.add(trimmed);
+        }
+      }
+    });
+
+    const dependentsLines = dependents.split('\n');
+    dependentsLines.forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('flowchart')) {
+        return;
+      }
+      if (trimmed.length > 0) {
+        if (trimmed.includes('-->')) {
+          edges.add(trimmed);
+        } else {
+          nodes.add(trimmed);
+        }
+      }
+    });
+
+    const merged = ['flowchart TB'];
+    nodes.forEach((node) => merged.push(node));
+    edges.forEach((edge) => merged.push(edge));
+    return merged.join('\n');
+  }
+
+  async function fetchAndRenderGraph() {
+    console.log('[fetchAndRenderGraph] called', { current_id, graph_loading });
+    if (!current_id || graph_loading) {
+      log(
+        'fetchAndRenderGraph early return: current_id=%s, graph_loading=%s',
+        current_id,
+        graph_loading
+      );
+      return;
+    }
+    graph_loading = true;
+    graph_diagram = null;
+    doRender();
+
+    try {
+      console.log(
+        '[fetchAndRenderGraph] fetching dep-tree for issue',
+        current_id
+      );
+      const [depsResponse, dependentsResponse] = await Promise.all([
+        sendFn('dep-tree', { id: current_id, reverse: false }),
+        sendFn('dep-tree', { id: current_id, reverse: true })
+      ]);
+
+      console.log('[fetchAndRenderGraph] responses', {
+        depsResponse,
+        dependentsResponse
+      });
+
+      log(
+        'depsResponse=%o, dependentsResponse=%o',
+        depsResponse,
+        dependentsResponse
+      );
+
+      const depsPayload = /** @type {any} */ (depsResponse);
+      const dependentsPayload = /** @type {any} */ (dependentsResponse);
+
+      if (
+        depsPayload &&
+        typeof depsPayload.diagram === 'string' &&
+        dependentsPayload &&
+        typeof dependentsPayload.diagram === 'string'
+      ) {
+        graph_diagram = mergeMermaidDiagrams(
+          depsPayload.diagram,
+          dependentsPayload.diagram
+        );
+        console.log(
+          '[fetchAndRenderGraph] merged graph chars:',
+          graph_diagram.length
+        );
+        log('merged graph: %d chars', graph_diagram.length);
+        if (graph_container) {
+          await renderMermaid();
+        } else {
+          log('graph_container is null, will render on ref callback');
+        }
+      } else {
+        console.log('[fetchAndRenderGraph] invalid response', {
+          depsPayload,
+          dependentsPayload
+        });
+        log(
+          'invalid response: depsPayload=%o, dependentsPayload=%o',
+          depsPayload,
+          dependentsPayload
+        );
+      }
+    } catch (err) {
+      console.log('[fetchAndRenderGraph] error', err);
+      log('fetch graph error %o', err);
+      graph_diagram = null;
+    } finally {
+      graph_loading = false;
+      doRender();
+    }
+  }
+
+  /**
    * @param {'overview'|'dependencies'} tab
    */
   const onTabChange = (tab) => {
     active_tab = tab;
+    log('tab changed to %s, deps_view_mode=%s', tab, deps_view_mode);
+    if (
+      tab === 'dependencies' &&
+      deps_view_mode === 'graph' &&
+      !graph_diagram &&
+      !graph_loading
+    ) {
+      log('switching to dependencies tab with graph mode, fetching graph');
+      void fetchAndRenderGraph();
+    }
     doRender();
   };
 
@@ -1353,9 +1676,39 @@ export function createDetailView(
                   ${notes_block} ${accept_block} ${comments_block}`
                 : ''}
               ${active_tab === 'dependencies'
-                ? html` <div class="detail-tab-content dependencies">
-                    ${depsSection('Dependencies', issue.dependencies || [])}
-                    ${depsSection('Dependents', issue.dependents || [])}
+                ? html`<div class="detail-tab-content dependencies">
+                    <div class="dependencies-content">
+                      <div class="deps-controls">
+                        <div class="deps-view-toggle">
+                          <button
+                            class="${deps_view_mode === 'list' ? 'active' : ''}"
+                            @click=${onViewModeClick('list')}
+                          >
+                            List
+                          </button>
+                          <button
+                            class="${deps_view_mode === 'graph'
+                              ? 'active'
+                              : ''}"
+                            @click=${onViewModeClick('graph')}
+                          >
+                            Graph
+                          </button>
+                        </div>
+                      </div>
+                      ${deps_view_mode === 'list'
+                        ? html`${depsSection(
+                            'Dependencies',
+                            issue.dependencies || []
+                          )}
+                          ${depsSection('Dependents', issue.dependents || [])}`
+                        : html`${graph_loading
+                            ? html`<p class="muted">Loading graph...</p>`
+                            : html`<div
+                                class="dep-graph-container"
+                                ${ref(graphContainerRef)}
+                              ></div>`}`}
+                    </div>
                   </div>`
                 : ''}
             </div>
@@ -1548,6 +1901,9 @@ export function createDetailView(
       comment_text = '';
       comment_pending = false;
       active_tab = 'overview';
+      // Reset graph state when loading new issue
+      graph_diagram = null;
+      graph_loading = false;
       doRender();
 
       // Fetch comments if not already present
@@ -1561,6 +1917,14 @@ export function createDetailView(
         } catch (err) {
           log('fetch comments failed %s %o', id, err);
         }
+      }
+      // If already on Dependencies tab with Graph view, auto-fetch for new issue
+      if (
+        /** @type {'overview'|'dependencies'} */ (active_tab) ===
+          'dependencies' &&
+        deps_view_mode === 'graph'
+      ) {
+        void fetchAndRenderGraph();
       }
     },
     clear() {
