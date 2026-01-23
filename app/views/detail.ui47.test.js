@@ -30,6 +30,11 @@ describe('detail deps UI (UI-47)', () => {
 
     await view.load('UI-100');
 
+    // Switch to Dependencies tab
+    const depsTab = mount.querySelector('.detail-tab:last-child');
+    depsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const text = mount.textContent || '';
     expect(text).toContain('Alpha');
     expect(text).toContain('Gamma');
@@ -66,6 +71,11 @@ describe('detail deps UI (UI-47)', () => {
 
     await view.load('UI-200');
 
+    // Switch to Dependencies tab
+    const depsTab = mount.querySelector('.detail-tab:last-child');
+    depsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const row = /** @type {HTMLLIElement} */ (mount.querySelector('ul li'));
     row.click();
     expect(navs[navs.length - 1]).toBe('#/issues?issue=UI-9');
@@ -88,6 +98,11 @@ describe('detail deps UI (UI-47)', () => {
     const send = vi.fn().mockResolvedValue(current2);
     const view = createDetailView(mount, send, undefined, stores3);
     await view.load('UI-300');
+
+    // Switch to Dependencies tab
+    const depsTab = mount.querySelector('.detail-tab:last-child');
+    depsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
 
     const input = /** @type {HTMLInputElement} */ (
       mount.querySelector('[data-testid="add-dependency"]')

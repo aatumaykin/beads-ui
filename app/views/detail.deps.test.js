@@ -29,6 +29,11 @@ describe('views/detail dependencies', () => {
     const view = createDetailView(mount, send, undefined, stores1);
     await view.load('UI-10');
 
+    // Switch to Dependencies tab
+    const depsTab = mount.querySelector('.detail-tab:last-child');
+    depsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const input = mount.querySelector('[data-testid="add-dependency"]');
     expect(input).toBeTruthy();
     const el = /** @type {HTMLInputElement} */ (input);
@@ -70,6 +75,11 @@ describe('views/detail dependencies', () => {
     const view = createDetailView(mount, send, undefined, stores2);
     await view.load('UI-20');
 
+    // Switch to Dependencies tab
+    const depsTab = mount.querySelector('.detail-tab:last-child');
+    depsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     // Find the remove button next to link #5
     const btns = mount.querySelectorAll('button');
     const rm = Array.from(btns).find((b) =>
@@ -103,6 +113,11 @@ describe('views/detail dependencies', () => {
     const send = vi.fn(async (type) => current3);
     const view = createDetailView(mount, send, undefined, stores3);
     await view.load('UI-30');
+
+    // Switch to Dependencies tab
+    const depsTab = mount.querySelector('.detail-tab:last-child');
+    depsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
 
     const input = mount.querySelector('[data-testid="add-dependency"]');
     const el = /** @type {HTMLInputElement} */ (input);

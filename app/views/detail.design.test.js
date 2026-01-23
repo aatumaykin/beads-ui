@@ -36,7 +36,9 @@ describe('detail view design section', () => {
     );
     expect(main).toBeTruthy();
     const children = Array.from(main.children).filter(
-      (el) => !el.classList.contains('detail-title')
+      (el) =>
+        !el.classList.contains('detail-title') &&
+        !el.classList.contains('detail-tabs')
     );
     const names = children.map((el) => {
       if (el.classList.contains('design')) {
