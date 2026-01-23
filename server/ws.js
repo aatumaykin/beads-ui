@@ -1338,6 +1338,50 @@ export async function handleMessage(ws, data) {
     return;
   }
 
+  // dep-tree: payload { id: string, reverse: boolean }
+  if (req.type === 'dep-tree') {
+    log('dep-tree');
+    const { id, reverse } = /** @type {any} */ (req.payload || {});
+    log('dep-tree params: id=%s, reverse=%s', id, reverse);
+    if (typeof id !== 'string' || id.length === 0) {
+      ws.send(
+        JSON.stringify(
+          makeError(
+            req,
+            'bad_request',
+            'payload requires { id: string, reverse?: boolean }'
+          )
+        )
+      );
+      return;
+    }
+    const direction = reverse === true ? 'up' : 'down';
+    const cwd_option = CURRENT_WORKSPACE?.root_dir
+      ? { cwd: CURRENT_WORKSPACE.root_dir }
+      : {};
+    log('dep-tree calling bd: direction=%s, cwd=%o', direction, cwd_option);
+    const res = await runBd(
+      ['dep', 'tree', id, '--format=mermaid', `--direction=${direction}`],
+      cwd_option
+    );
+    log(
+      'dep-tree result: code=%d, stdoutLen=%d, stderr=%s',
+      res.code,
+      (res.stdout || '').length,
+      res.stderr
+    );
+    if (res.code !== 0) {
+      ws.send(
+        JSON.stringify(makeError(req, 'bd_error', res.stderr || 'bd failed'))
+      );
+      return;
+    }
+    const response = { diagram: res.stdout || '' };
+    log('dep-tree sending response: diagramLen=%d', response.diagram.length);
+    ws.send(JSON.stringify(makeOk(req, response)));
+    return;
+  }
+
   // Unknown type
   const err = makeError(
     req,
