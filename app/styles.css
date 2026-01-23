@@ -1909,6 +1909,26 @@ html[data-theme='dark'] {
   color: inherit;
 }
 
+/* Dependency remove button - fixed size, right-aligned */
+#detail-root .dep-remove-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+#detail-root .dep-remove-btn:hover {
+  background: color-mix(in srgb, var(--control-bg) 30%, transparent);
+}
+
 .props-card__footer {
   display: flex;
   justify-content: stretch;

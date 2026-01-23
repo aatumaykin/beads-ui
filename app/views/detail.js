@@ -895,6 +895,7 @@ export function createDetailView(
                   ${createTypeBadge(dep.issue_type || '')}
                   <span class="text-truncate">${dep.title || ''}</span>
                   <button
+                    class="dep-remove-btn"
                     aria-label=${`Remove dependency ${did}`}
                     @click=${makeDepRemoveClick(did, title)}
                   >
