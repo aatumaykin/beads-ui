@@ -1914,7 +1914,7 @@ html[data-theme='dark'] {
   width: 20px;
   height: 20px;
   padding: 0;
-  border: none;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
   background: transparent;
   color: inherit;
   border-radius: 4px;
