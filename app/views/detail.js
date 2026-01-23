@@ -113,7 +113,7 @@ export function createDetailView(
   let comment_text = '';
   /** @type {boolean} */
   let comment_pending = false;
-  /** @type {'overview'|'dependencies'|'properties'} */
+  /** @type {'overview'|'dependencies'} */
   let active_tab = 'overview';
 
   /** @type {HTMLDialogElement | null} */
@@ -863,7 +863,7 @@ export function createDetailView(
   };
 
   /**
-   * @param {'overview'|'dependencies'|'properties'} tab
+   * @param {'overview'|'dependencies'} tab
    */
   const onTabChange = (tab) => {
     active_tab = tab;
@@ -930,14 +930,6 @@ export function createDetailView(
           @click=${() => onTabChange('dependencies')}
         >
           Dependencies
-        </button>
-        <button
-          class="detail-tab ${active_tab === 'properties'
-            ? 'detail-tab--active'
-            : ''}"
-          @click=${() => onTabChange('properties')}
-        >
-          Properties
         </button>
       </div>
     `;
@@ -1355,18 +1347,20 @@ export function createDetailView(
         <div class="detail-layout">
           <div class="detail-main">
             ${renderTabs()}
-            ${active_tab === 'overview'
-              ? html`${title_zone} ${desc_block} ${design_block} ${notes_block}
-                ${accept_block} ${comments_block}`
-              : ''}
-            ${active_tab === 'dependencies'
-              ? html` <div class="detail-tab-content dependencies">
-                  ${depsSection('Dependencies', issue.dependencies || [])}
-                  ${depsSection('Dependents', issue.dependents || [])}
-                </div>`
-              : ''}
-            ${active_tab === 'properties' ? html`${properties_block}` : ''}
+            <div class="detail-content-area">
+              ${active_tab === 'overview'
+                ? html`${title_zone} ${desc_block} ${design_block}
+                  ${notes_block} ${accept_block} ${comments_block}`
+                : ''}
+              ${active_tab === 'dependencies'
+                ? html` <div class="detail-tab-content dependencies">
+                    ${depsSection('Dependencies', issue.dependencies || [])}
+                    ${depsSection('Dependents', issue.dependents || [])}
+                  </div>`
+                : ''}
+            </div>
           </div>
+          <div class="detail-side">${properties_block}</div>
         </div>
       </div>
     `;
