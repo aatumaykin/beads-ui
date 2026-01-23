@@ -124,6 +124,7 @@ export function createEpicsView(
                         <col style="width: 120px" />
                         <col style="width: 160px" />
                         <col style="width: 130px" />
+                        <col style="width: 80px" />
                       </colgroup>
                       <thead>
                         <tr>
@@ -133,6 +134,7 @@ export function createEpicsView(
                           <th>Status</th>
                           <th>Assignee</th>
                           <th>Priority</th>
+                          <th>Deps</th>
                         </tr>
                       </thead>
                       <tbody>
