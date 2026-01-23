@@ -1923,10 +1923,14 @@ html[data-theme='dark'] {
   align-items: center;
   justify-content: center;
   margin-left: auto;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 #detail-root .dep-remove-btn:hover {
   background: color-mix(in srgb, var(--control-bg) 30%, transparent);
+  border-color: color-mix(in srgb, currentColor 60%, transparent);
 }
 
 .props-card__footer {
