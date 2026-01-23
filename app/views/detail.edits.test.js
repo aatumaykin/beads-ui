@@ -40,6 +40,11 @@ describe('views/detail edits', () => {
     const view = createDetailView(mount, send, undefined, stores1);
     await view.load('UI-7');
 
+    // Switch to Properties tab to see status selector
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const select = /** @type {HTMLSelectElement} */ (
       mount.querySelector('select')
     );

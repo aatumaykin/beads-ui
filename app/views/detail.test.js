@@ -45,9 +45,21 @@ describe('views/detail', () => {
       mount.querySelector('h2 .editable')
     );
     expect(titleSpan.textContent).toBe('Issue detail view');
+
+    // Switch to Properties tab to see status and priority selects
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     // status select + priority select exist
     const selects = mount.querySelectorAll('select');
     expect(selects.length).toBeGreaterThanOrEqual(2);
+
+    // Switch back to Overview tab to see description
+    const overviewTab = mount.querySelector('.detail-tab:first-child');
+    overviewTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     // description rendered as markdown in read mode
     const md = /** @type {HTMLDivElement} */ (mount.querySelector('.md'));
     expect(md).toBeTruthy();
@@ -62,8 +74,8 @@ describe('views/detail', () => {
     );
     expect(descInput0).toBeNull();
 
-    // Switch to Dependencies tab to see dependency links
-    const depsTab = mount.querySelector('.detail-tab:last-child');
+    // Switch to Dependencies tab (second tab) to see dependency links
+    const depsTab = mount.querySelectorAll('.detail-tab')[1];
     depsTab?.dispatchEvent(new window.Event('click'));
     await Promise.resolve();
 
@@ -104,6 +116,9 @@ describe('views/detail', () => {
     };
     const view = createDetailView(mount, async () => ({}), undefined, stores);
     await view.load('UI-50');
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
     const badge = mount.querySelector('.props-card .type-badge');
     expect(badge).toBeTruthy();
     expect(badge && badge.textContent).toBe('Feature');
@@ -446,6 +461,10 @@ describe('views/detail', () => {
       const view = createDetailView(mount, async () => ({}), undefined, stores);
       await view.load('UI-99');
 
+      const propsTab = mount.querySelector('.detail-tab:last-child');
+      propsTab?.dispatchEvent(new window.Event('click'));
+      await Promise.resolve();
+
       const deleteBtn = mount.querySelector('.delete-issue-btn');
       expect(deleteBtn).toBeTruthy();
       expect(deleteBtn?.getAttribute('title')).toBe('Delete issue');
@@ -474,6 +493,10 @@ describe('views/detail', () => {
       };
       const view = createDetailView(mount, async () => ({}), undefined, stores);
       await view.load('UI-100');
+
+      const propsTab = mount.querySelector('.detail-tab:last-child');
+      propsTab?.dispatchEvent(new window.Event('click'));
+      await Promise.resolve();
 
       const deleteBtn = /** @type {HTMLButtonElement} */ (
         mount.querySelector('.delete-issue-btn')
@@ -526,6 +549,11 @@ describe('views/detail', () => {
       );
       await view.load('UI-101');
 
+      // Switch to Properties tab to see delete button
+      const propsTab = mount.querySelector('.detail-tab:last-child');
+      propsTab?.dispatchEvent(new window.Event('click'));
+      await Promise.resolve();
+
       const deleteBtn = /** @type {HTMLButtonElement} */ (
         mount.querySelector('.delete-issue-btn')
       );
@@ -576,6 +604,10 @@ describe('views/detail', () => {
         stores
       );
       await view.load('UI-102');
+
+      const propsTab = mount.querySelector('.detail-tab:last-child');
+      propsTab?.dispatchEvent(new window.Event('click'));
+      await Promise.resolve();
 
       const deleteBtn = /** @type {HTMLButtonElement} */ (
         mount.querySelector('.delete-issue-btn')

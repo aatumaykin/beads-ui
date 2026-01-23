@@ -113,7 +113,7 @@ export function createDetailView(
   let comment_text = '';
   /** @type {boolean} */
   let comment_pending = false;
-  /** @type {'overview'|'dependencies'} */
+  /** @type {'overview'|'dependencies'|'properties'} */
   let active_tab = 'overview';
 
   /** @type {HTMLDialogElement | null} */
@@ -863,7 +863,7 @@ export function createDetailView(
   };
 
   /**
-   * @param {'overview'|'dependencies'} tab
+   * @param {'overview'|'dependencies'|'properties'} tab
    */
   const onTabChange = (tab) => {
     active_tab = tab;
@@ -929,6 +929,14 @@ export function createDetailView(
           @click=${() => onTabChange('dependencies')}
         >
           Dependencies
+        </button>
+        <button
+          class="detail-tab ${active_tab === 'properties'
+            ? 'detail-tab--active'
+            : ''}"
+          @click=${() => onTabChange('properties')}
+        >
+          Properties
         </button>
       </div>
     `;
@@ -1238,116 +1246,125 @@ export function createDetailView(
       </div>
     </div>`;
 
+    // Properties section
+    const properties_block = html` <div class="detail-tab-content properties">
+      <div class="props-card">
+        <div class="props-card__header">
+          <div class="props-card__title">Properties</div>
+          <button
+            class="delete-issue-btn"
+            title="Delete issue"
+            aria-label="Delete issue"
+            @click=${onDeleteClick}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              ></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            <span class="tooltip">Delete issue</span>
+          </button>
+        </div>
+        <div class="prop">
+          <div class="label">Type</div>
+          <div class="value">
+            ${createTypeBadge(/** @type {any} */ (issue).issue_type)}
+          </div>
+        </div>
+        <div class="prop">
+          <div class="label">Status</div>
+          <div class="value">${status_select}</div>
+        </div>
+        <div class="prop">
+          <div class="label">Priority</div>
+          <div class="value">${priority_select}</div>
+        </div>
+        <div class="prop assignee">
+          <div class="label">Assignee</div>
+          <div class="value">
+            ${edit_assignee
+              ? html`<input
+                    type="text"
+                    aria-label="Edit assignee"
+                    .value=${/** @type {any} */ (issue).assignee || ''}
+                    size=${Math.min(
+                      40,
+                      Math.max(12, (issue.assignee || '').length + 3)
+                    )}
+                    @keydown=${
+                      /** @param {KeyboardEvent} e */ (e) => {
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          onAssigneeCancel();
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          onAssigneeSave();
+                        }
+                      }
+                    }
+                  />
+                  <button
+                    class="btn"
+                    style="margin-left:6px"
+                    @click=${onAssigneeSave}
+                  >
+                    Save
+                  </button>
+                  <button
+                    class="btn"
+                    style="margin-left:6px"
+                    @click=${onAssigneeCancel}
+                  >
+                    Cancel
+                  </button>`
+              : html`${(() => {
+                  const raw = issue.assignee || '';
+                  const has = raw.trim().length > 0;
+                  const text = has ? raw : 'Unassigned';
+                  const cls = has ? 'editable' : 'editable muted';
+                  return html`<span
+                    class=${cls}
+                    tabindex="0"
+                    role="button"
+                    aria-label="Edit assignee"
+                    @click=${onAssigneeSpanClick}
+                    @keydown=${onAssigneeKeydown}
+                    >${text}</span
+                  >`;
+                })()}`}
+          </div>
+        </div>
+      </div>
+      ${labels_block}
+    </div>`;
+
     return html`
       <div class="panel__body" id="detail-root">
         <div class="detail-layout">
           <div class="detail-main">
             ${renderTabs()}
-            ${
-              active_tab === 'overview'
-                ? html`${title_zone} ${desc_block} ${design_block}
-                  ${notes_block} ${accept_block} ${comments_block}`
-                : ''
-            }
-            ${
-              active_tab === 'dependencies'
-                ? html` <div class="detail-tab-content dependencies">
-                    ${depsSection('Dependencies', issue.dependencies || [])}
-                    ${depsSection('Dependents', issue.dependents || [])}
-                  </div>`
-                : ''
-            }
-          </div>
-          <div class="detail-side">
-            <div class="props-card">
-              <div class="props-card__header">
-                <div class="props-card__title">Properties</div>
-                <button class="delete-issue-btn" title="Delete issue" aria-label="Delete issue" @click=${onDeleteClick}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                  <span class="tooltip">Delete issue</span>
-                </button>
-              </div>
-                <div class="prop">
-                  <div class="label">Type</div>
-                  <div class="value">
-                    ${createTypeBadge(/** @type {any} */ (issue).issue_type)}
-                  </div>
-                </div>
-                <div class="prop">
-                  <div class="label">Status</div>
-                  <div class="value">${status_select}</div>
-                </div>
-                <div class="prop">
-                  <div class="label">Priority</div>
-                  <div class="value">${priority_select}</div>
-                </div>
-                <div class="prop assignee">
-                  <div class="label">Assignee</div>
-                  <div class="value">
-                    ${
-                      edit_assignee
-                        ? html`<input
-                              type="text"
-                              aria-label="Edit assignee"
-                              .value=${
-                                /** @type {any} */ (issue).assignee || ''
-                              }
-                              size=${Math.min(
-                                40,
-                                Math.max(12, (issue.assignee || '').length + 3)
-                              )}
-                              @keydown=${
-                                /** @param {KeyboardEvent} e */ (e) => {
-                                  if (e.key === 'Escape') {
-                                    e.preventDefault();
-                                    onAssigneeCancel();
-                                  } else if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    onAssigneeSave();
-                                  }
-                                }
-                              }
-                            />
-                            <button
-                              class="btn"
-                              style="margin-left:6px"
-                              @click=${onAssigneeSave}
-                            >
-                              Save
-                            </button>
-                            <button
-                              class="btn"
-                              style="margin-left:6px"
-                              @click=${onAssigneeCancel}
-                            >
-                              Cancel
-                            </button>`
-                        : html`${(() => {
-                            const raw = issue.assignee || '';
-                            const has = raw.trim().length > 0;
-                            const text = has ? raw : 'Unassigned';
-                            const cls = has ? 'editable' : 'editable muted';
-                            return html`<span
-                              class=${cls}
-                              tabindex="0"
-                              role="button"
-                              aria-label="Edit assignee"
-                              @click=${onAssigneeSpanClick}
-                              @keydown=${onAssigneeKeydown}
-                              >${text}</span
-                            >`;
-                          })()}`
-                    }
-                  </div>
-                </div>
-              </div>
-              ${labels_block}
-            </div>
+            ${active_tab === 'overview'
+              ? html`${title_zone} ${desc_block} ${design_block} ${notes_block}
+                ${accept_block} ${comments_block}`
+              : ''}
+            ${active_tab === 'dependencies'
+              ? html` <div class="detail-tab-content dependencies">
+                  ${depsSection('Dependencies', issue.dependencies || [])}
+                  ${depsSection('Dependents', issue.dependents || [])}
+                </div>`
+              : ''}
+            ${active_tab === 'properties' ? html`${properties_block}` : ''}
           </div>
         </div>
       </div>
