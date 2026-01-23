@@ -67,6 +67,7 @@ function formatCommentDate(dateStr) {
  * @property {Dependency[]} [dependencies]
  * @property {Dependency[]} [dependents]
  * @property {Comment[]} [comments]
+ * @property {string} [close_reason]
  */
 
 /**
@@ -110,13 +111,15 @@ export function createDetailView(
   let edit_accept = false;
   /** @type {boolean} */
   let edit_assignee = false;
+  /** @type {boolean} */
+  let edit_close_reason = false;
   /** @type {string} */
   let new_label_text = '';
   /** @type {string} */
   let comment_text = '';
   /** @type {boolean} */
   let comment_pending = false;
-  /** @type {'overview'|'dependencies'} */
+  /** @type {'overview'|'dependencies'|'close_reason'} */
   let active_tab = 'overview';
   /** @type {'list'|'graph'} */
   let deps_view_mode = 'list';
@@ -821,6 +824,77 @@ export function createDetailView(
     doRender();
   };
 
+  const onCloseReasonEdit = () => {
+    edit_close_reason = true;
+    doRender();
+  };
+
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  const onCloseReasonKeydown = (ev) => {
+    /** @type {KeyboardEvent} */
+    if (ev.key === 'Escape') {
+      edit_close_reason = false;
+      doRender();
+    } else if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) {
+      const btn = /** @type {HTMLButtonElement|null} */ (
+        mount_element.querySelector(
+          '#detail-root .close-reason .editable-actions button'
+        )
+      );
+      if (btn) {
+        btn.click();
+      }
+    }
+  };
+
+  const onCloseReasonSave = async () => {
+    if (!current || pending) {
+      return;
+    }
+    const ta = /** @type {HTMLTextAreaElement|null} */ (
+      mount_element.querySelector('#detail-root .close-reason textarea')
+    );
+    const prev = current.close_reason || '';
+    const next = ta ? ta.value : '';
+    if (next === prev) {
+      edit_close_reason = false;
+      doRender();
+      return;
+    }
+    pending = true;
+    if (ta) {
+      ta.disabled = true;
+    }
+    try {
+      log('save close reason %s', String(current?.id || ''));
+      const updated = await sendFn('edit-text', {
+        id: current.id,
+        field: 'close_reason',
+        value: next
+      });
+      if (updated && typeof updated === 'object') {
+        current = /** @type {IssueDetail} */ (updated);
+        edit_close_reason = false;
+        doRender();
+      }
+    } catch (err) {
+      log('save close reason failed %s %o', String(current?.id || ''), err);
+      current.close_reason = prev;
+      edit_close_reason = false;
+      doRender();
+      showToast('Failed to save close reason', 'error');
+    } finally {
+      pending = false;
+    }
+  };
+
+  const onCloseReasonCancel = () => {
+    edit_close_reason = false;
+    doRender();
+  };
+
   // Comment input handlers
   /**
    * @param {Event} ev
@@ -1176,7 +1250,7 @@ export function createDetailView(
   }
 
   /**
-   * @param {'overview'|'dependencies'} tab
+   * @param {'overview'|'dependencies'|'close_reason'} tab
    */
   const onTabChange = (tab) => {
     active_tab = tab;
@@ -1253,6 +1327,14 @@ export function createDetailView(
           @click=${() => onTabChange('dependencies')}
         >
           Dependencies
+        </button>
+        <button
+          class="detail-tab ${active_tab === 'close_reason'
+            ? 'detail-tab--active'
+            : ''}"
+          @click=${() => onTabChange('close_reason')}
+        >
+          Close Reason
         </button>
       </div>
     `;
@@ -1711,6 +1793,48 @@ export function createDetailView(
                     </div>
                   </div>`
                 : ''}
+              ${active_tab === 'close_reason'
+                ? html`<div class="detail-tab-content close-reason">
+                    <div class="props-card">
+                      <div class="props-card__title">Close Reason</div>
+                      <div class="props-card__body">
+                        ${edit_close_reason
+                          ? html`<textarea
+                                @keydown=${onCloseReasonKeydown}
+                                .value=${issue.close_reason || ''}
+                                rows="6"
+                                style="width:100%"
+                              ></textarea>
+                              <div class="editable-actions">
+                                <button @click=${onCloseReasonSave}>
+                                  Save
+                                </button>
+                                <button @click=${onCloseReasonCancel}>
+                                  Cancel
+                                </button>
+                              </div>`
+                          : html`${(() => {
+                              const text = issue.close_reason || '';
+                              const has = text.trim().length > 0;
+                              return html`<div
+                                class="md editable"
+                                tabindex="0"
+                                role="button"
+                                aria-label="Edit close reason"
+                                @click=${onCloseReasonEdit}
+                                @keydown=${onCloseReasonEditableKeydown}
+                              >
+                                ${has
+                                  ? renderMarkdown(text)
+                                  : html`<div class="muted">
+                                      Add close reason…
+                                    </div>`}
+                              </div>`;
+                            })()}`}
+                      </div>
+                    </div>
+                  </div>`
+                : ''}
             </div>
           </div>
           <div class="detail-side">${properties_block}</div>
@@ -1880,6 +2004,15 @@ export function createDetailView(
   function onDesignEditableKeydown(ev) {
     if (ev.key === 'Enter') {
       onDesignEdit();
+    }
+  }
+
+  /**
+   * @param {KeyboardEvent} ev
+   */
+  function onCloseReasonEditableKeydown(ev) {
+    if (ev.key === 'Enter') {
+      onCloseReasonEdit();
     }
   }
 
