@@ -4,7 +4,7 @@
  * triggers once per issues envelope to let views re-render.
  */
 /**
- * @typedef {{ id: string, title?: string, status?: 'open'|'in_progress'|'closed', priority?: number, issue_type?: string, created_at?: number, updated_at?: number, closed_at?: number }} IssueLite
+ * @typedef {{ id: string, title?: string, status?: 'open'|'in_progress'|'closed', priority?: number, issue_type?: string, created_at?: number, updated_at?: number, closed_at?: number, dependency_count?: number, dependent_count?: number }} IssueLite
  */
 import { cmpClosedDesc, cmpPriorityThenCreated } from './sort.js';
 
@@ -76,8 +76,36 @@ export function createListSelectors(issue_stores = undefined) {
     );
     const epic = arr.find((it) => String(it?.id || '') === String(epic_id));
     const dependents = Array.isArray(epic?.dependents) ? epic.dependents : [];
+
+    // Build a map of dependency counts from the full issues list
+    // This is needed because dependents array doesn't include dependency_count/dependent_count
+    const all_issues = issue_stores.snapshotFor('tab:issues') || [];
+    /** @type {Map<string, { dependency_count: number, dependent_count: number }>} */
+    const deps_map = new Map();
+    for (const issue of all_issues) {
+      if (issue && typeof issue.id === 'string') {
+        deps_map.set(issue.id, {
+          dependency_count: Number(issue.dependency_count) || 0,
+          dependent_count: Number(issue.dependent_count) || 0
+        });
+      }
+    }
+
+    // Enrich each dependent with dependency counts
+    /** @type {IssueLite[]} */
+    const enriched = dependents.map(
+      (/** @type {{ id?: string } & Record<string, unknown>} */ dep) => {
+        const deps = deps_map.get(String(dep.id || ''));
+        return {
+          ...dep,
+          dependency_count: deps ? deps.dependency_count : 0,
+          dependent_count: deps ? deps.dependent_count : 0
+        };
+      }
+    );
+
     return /** @type {IssueLite[]} */ (
-      dependents.slice().sort(cmpPriorityThenCreated)
+      enriched.slice().sort(cmpPriorityThenCreated)
     );
   }
 

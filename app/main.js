@@ -651,6 +651,8 @@ export function bootstrap(root_element) {
     /** @type {null | (() => Promise<void>)} */
     let unsub_epics_tab = null;
     /** @type {null | (() => Promise<void>)} */
+    let unsub_epics_issues = null;
+    /** @type {null | (() => Promise<void>)} */
     let unsub_board_ready = null;
     /** @type {null | (() => Promise<void>)} */
     let unsub_board_in_progress = null;
@@ -766,6 +768,31 @@ export function bootstrap(root_element) {
               pending_subscriptions.delete('tab:epics');
             });
         }
+        // Also subscribe to tab:issues to get dependency counts for epic children
+        try {
+          sub_issue_stores.register('tab:issues', { type: 'all-issues' });
+        } catch (err) {
+          log('register issues store for epics failed: %o', err);
+        }
+        const epics_issues_key = 'tab:issues:all-issues';
+        if (
+          (!unsub_epics_issues || epics_issues_key !== last_issues_spec_key) &&
+          !pending_subscriptions.has(epics_issues_key)
+        ) {
+          pending_subscriptions.add(epics_issues_key);
+          void subscriptions
+            .subscribeList('tab:issues', { type: 'all-issues' })
+            .then((unsub) => {
+              unsub_epics_issues = unsub;
+              last_issues_spec_key = epics_issues_key;
+            })
+            .catch((err) => {
+              log('subscribe issues for epics failed: %o', err);
+            })
+            .finally(() => {
+              pending_subscriptions.delete(epics_issues_key);
+            });
+        }
       } else if (unsub_epics_tab) {
         void unsub_epics_tab().catch(() => {});
         unsub_epics_tab = null;
@@ -773,6 +800,11 @@ export function bootstrap(root_element) {
           sub_issue_stores.unregister('tab:epics');
         } catch (err) {
           log('unregister epics store failed: %o', err);
+        }
+        // Also unsubscribe from tab:issues used for epics
+        if (unsub_epics_issues) {
+          void unsub_epics_issues().catch(() => {});
+          unsub_epics_issues = null;
         }
       }
 
