@@ -1534,13 +1534,16 @@ html[data-theme='dark'] {
 /* Detail two-column layout with a properties card */
 .detail-layout {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
   align-items: start;
 }
 .detail-side {
   position: sticky;
   top: 18px;
+}
+.detail-main {
+  max-width: 640px;
 }
 .detail-main h2 {
   font-size: 28px;
@@ -1576,15 +1579,15 @@ html[data-theme='dark'] {
 .detail-tabs {
   display: flex;
   gap: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
 .detail-tab {
-  padding: 8px 0;
+  padding: 10px 0;
   background: transparent;
   border: none;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   position: relative;
@@ -1619,6 +1622,13 @@ html[data-theme='dark'] {
     transform: translateY(0);
   }
 }
+.detail-content-area {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  max-width: 100%;
+  overflow-x: auto;
+}
 .detail-breadcrumb {
   color: var(--muted);
   font-size: 13px;
@@ -1641,13 +1651,10 @@ html[data-theme='dark'] {
   border-color: color-mix(in srgb, var(--link) 32%, var(--button-border));
 }
 .props-card {
-  background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 0;
-  padding: 10px;
-}
-.props-card:not(:last-child) {
-  border-bottom: none;
+  border-radius: 6px;
+  padding: 12px;
 }
 .props-card ul {
   list-style: none;
@@ -1989,9 +1996,14 @@ html[data-theme='dark'] {
   font-variant-ligatures: none;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
   .detail-layout {
     grid-template-columns: 1fr;
+  }
+
+  .detail-side {
+    position: static;
+    order: 2;
   }
 }
 

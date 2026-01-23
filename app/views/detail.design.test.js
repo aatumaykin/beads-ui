@@ -31,14 +31,12 @@ describe('detail view design section', () => {
     const view = createDetailView(mount, async () => ({}), undefined, storesA);
     await view.load('UI-116');
 
-    const main = /** @type {HTMLElement} */ (
-      mount.querySelector('.detail-main')
+    const contentArea = /** @type {HTMLElement} */ (
+      mount.querySelector('.detail-content-area')
     );
-    expect(main).toBeTruthy();
-    const children = Array.from(main.children).filter(
-      (el) =>
-        !el.classList.contains('detail-title') &&
-        !el.classList.contains('detail-tabs')
+    expect(contentArea).toBeTruthy();
+    const children = Array.from(contentArea.children).filter(
+      (el) => !el.classList.contains('detail-title')
     );
     const names = children.map((el) => {
       if (el.classList.contains('design')) {
