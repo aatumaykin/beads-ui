@@ -1795,43 +1795,37 @@ export function createDetailView(
                 : ''}
               ${active_tab === 'close_reason'
                 ? html`<div class="detail-tab-content close-reason">
-                    <div class="props-card">
-                      <div class="props-card__body">
-                        ${edit_close_reason
-                          ? html`<textarea
-                                @keydown=${onCloseReasonKeydown}
-                                .value=${issue.close_reason || ''}
-                                rows="6"
-                                style="width:100%"
-                              ></textarea>
-                              <div class="editable-actions">
-                                <button @click=${onCloseReasonSave}>
-                                  Save
-                                </button>
-                                <button @click=${onCloseReasonCancel}>
-                                  Cancel
-                                </button>
-                              </div>`
-                          : html`${(() => {
-                              const text = issue.close_reason || '';
-                              const has = text.trim().length > 0;
-                              return html`<div
-                                class="md editable"
-                                tabindex="0"
-                                role="button"
-                                aria-label="Edit close reason"
-                                @click=${onCloseReasonEdit}
-                                @keydown=${onCloseReasonEditableKeydown}
-                              >
-                                ${has
-                                  ? renderMarkdown(text)
-                                  : html`<div class="muted">
-                                      Add close reason…
-                                    </div>`}
-                              </div>`;
-                            })()}`}
-                      </div>
-                    </div>
+                    ${edit_close_reason
+                      ? html`<textarea
+                            @keydown=${onCloseReasonKeydown}
+                            .value=${issue.close_reason || ''}
+                            rows="6"
+                            style="width:100%"
+                          ></textarea>
+                          <div class="editable-actions">
+                            <button @click=${onCloseReasonSave}>Save</button>
+                            <button @click=${onCloseReasonCancel}>
+                              Cancel
+                            </button>
+                          </div>`
+                      : html`${(() => {
+                          const text = issue.close_reason || '';
+                          const has = text.trim().length > 0;
+                          return html`<div
+                            class="md editable"
+                            tabindex="0"
+                            role="button"
+                            aria-label="Edit close reason"
+                            @click=${onCloseReasonEdit}
+                            @keydown=${onCloseReasonEditableKeydown}
+                          >
+                            ${has
+                              ? renderMarkdown(text)
+                              : html`<div class="muted">
+                                  Add close reason…
+                                </div>`}
+                          </div>`;
+                        })()}`}
                   </div>`
                 : ''}
             </div>
