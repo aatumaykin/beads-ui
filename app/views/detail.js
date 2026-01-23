@@ -206,7 +206,7 @@ export function createDetailView(
       current = null;
       current_id = null;
       doRender();
-      // Navigate back to close the dialog
+      // Navigate back to close dialog - navigate to view without issue parameter
       const view = parseView(window.location.hash || '');
       navigateFn(`#/${view}`);
     } catch (err) {
