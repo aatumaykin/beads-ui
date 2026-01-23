@@ -40,7 +40,7 @@ describe('views/detail', () => {
 
     await view.load('UI-29');
 
-    // ID is no longer rendered within detail view; the dialog title shows it
+    // ID is no longer rendered within detail view; dialog title shows it
     const titleSpan = /** @type {HTMLSpanElement} */ (
       mount.querySelector('h2 .editable')
     );
@@ -56,6 +56,17 @@ describe('views/detail', () => {
     const code = md.querySelector('code');
     expect(code && code.textContent).toBe('code');
 
+    // No description textarea in read mode (only comment input textarea should exist)
+    const descInput0 = /** @type {HTMLTextAreaElement|null} */ (
+      mount.querySelector('.description textarea')
+    );
+    expect(descInput0).toBeNull();
+
+    // Switch to Dependencies tab to see dependency links
+    const depsTab = mount.querySelector('.detail-tab:last-child');
+    depsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const links = mount.querySelectorAll('li');
     const hrefs = Array.from(links)
       .map((a) => a.dataset.href)
@@ -65,12 +76,6 @@ describe('views/detail', () => {
       '#/issues?issue=UI-27',
       '#/issues?issue=UI-34'
     ]);
-
-    // No description textarea in read mode (only comment input textarea should exist)
-    const descInput0 = /** @type {HTMLTextAreaElement|null} */ (
-      mount.querySelector('.description textarea')
-    );
-    expect(descInput0).toBeNull();
 
     // Simulate clicking the first internal link, ensure navigate_fn is used
     links[0].click();

@@ -113,6 +113,8 @@ export function createDetailView(
   let comment_text = '';
   /** @type {boolean} */
   let comment_pending = false;
+  /** @type {'overview'|'dependencies'} */
+  let active_tab = 'overview';
 
   /** @type {HTMLDialogElement | null} */
   let delete_dialog = null;
@@ -861,6 +863,14 @@ export function createDetailView(
   };
 
   /**
+   * @param {'overview'|'dependencies'} tab
+   */
+  const onTabChange = (tab) => {
+    active_tab = tab;
+    doRender();
+  };
+
+  /**
    * @param {'Dependencies'|'Dependents'} title
    * @param {Dependency[]} items
    */
@@ -897,6 +907,29 @@ export function createDetailView(
           <input type="text" placeholder="Issue ID" data-testid=${test_id} />
           <button @click=${makeDepAddClick(items, title)}>Add</button>
         </div>
+      </div>
+    `;
+  }
+
+  function renderTabs() {
+    return html`
+      <div class="detail-tabs">
+        <button
+          class="detail-tab ${active_tab === 'overview'
+            ? 'detail-tab--active'
+            : ''}"
+          @click=${() => onTabChange('overview')}
+        >
+          Overview
+        </button>
+        <button
+          class="detail-tab ${active_tab === 'dependencies'
+            ? 'detail-tab--active'
+            : ''}"
+          @click=${() => onTabChange('dependencies')}
+        >
+          Dependencies
+        </button>
       </div>
     `;
   }
@@ -1209,8 +1242,21 @@ export function createDetailView(
       <div class="panel__body" id="detail-root">
         <div class="detail-layout">
           <div class="detail-main">
-            ${title_zone} ${desc_block} ${design_block} ${notes_block}
-            ${accept_block} ${comments_block}
+            ${renderTabs()}
+            ${
+              active_tab === 'overview'
+                ? html`${title_zone} ${desc_block} ${design_block}
+                  ${notes_block} ${accept_block} ${comments_block}`
+                : ''
+            }
+            ${
+              active_tab === 'dependencies'
+                ? html` <div class="detail-tab-content dependencies">
+                    ${depsSection('Dependencies', issue.dependencies || [])}
+                    ${depsSection('Dependents', issue.dependents || [])}
+                  </div>`
+                : ''
+            }
           </div>
           <div class="detail-side">
             <div class="props-card">
@@ -1301,8 +1347,6 @@ export function createDetailView(
                 </div>
               </div>
               ${labels_block}
-              ${depsSection('Dependencies', issue.dependencies || [])}
-              ${depsSection('Dependents', issue.dependents || [])}
             </div>
           </div>
         </div>
@@ -1491,6 +1535,7 @@ export function createDetailView(
       pending = false;
       comment_text = '';
       comment_pending = false;
+      active_tab = 'overview';
       doRender();
 
       // Fetch comments if not already present
