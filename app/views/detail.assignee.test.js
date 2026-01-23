@@ -42,6 +42,10 @@ describe('views/detail assignee edit', () => {
     const view = createDetailView(mount, send, undefined, stores1);
     await view.load('UI-57');
 
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const assigneeSpan = /** @type {HTMLSpanElement} */ (
       mount.querySelector('#detail-root .prop.assignee .value .editable')
     );
@@ -105,6 +109,10 @@ describe('views/detail assignee edit', () => {
     const view = createDetailView(mount, send, undefined, stores2);
     await view.load('UI-88');
 
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const ph = /** @type {HTMLSpanElement} */ (
       mount.querySelector('#detail-root .prop.assignee .value .editable')
     );
@@ -156,6 +164,10 @@ describe('views/detail assignee edit', () => {
 
     const view = createDetailView(mount, send, undefined, stores3);
     await view.load('UI-31');
+
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
 
     const span = /** @type {HTMLSpanElement} */ (
       mount.querySelector('#detail-root .prop.assignee .value .editable')

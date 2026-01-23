@@ -37,6 +37,11 @@ describe('views/detail priority edit', () => {
     const view = createDetailView(mount, send, undefined, stores);
     await view.load('UI-70');
 
+    // Switch to Properties tab to see priority selector
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const selects = mount.querySelectorAll('select.badge--priority');
     expect(selects.length).toBe(1);
     const prio = /** @type {HTMLSelectElement} */ (selects[0]);
@@ -77,6 +82,12 @@ describe('views/detail priority edit', () => {
 
     const view = createDetailView(mount, send, undefined, stores);
     await view.load('UI-71');
+
+    // Switch to Properties tab to see priority selector
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     const prio = /** @type {HTMLSelectElement} */ (
       mount.querySelector('select.badge--priority')
     );

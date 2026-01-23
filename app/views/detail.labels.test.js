@@ -44,6 +44,11 @@ describe('detail view labels', () => {
     const view = createDetailView(mount, sendFn, undefined, stores);
     await view.load('UI-5');
 
+    // Switch to Properties tab to see labels
+    const propsTab = mount.querySelector('.detail-tab:last-child');
+    propsTab?.dispatchEvent(new window.Event('click'));
+    await Promise.resolve();
+
     // Initial chip present
     expect(mount.querySelectorAll('.labels .badge').length).toBe(1);
 

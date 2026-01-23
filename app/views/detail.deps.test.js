@@ -29,8 +29,8 @@ describe('views/detail dependencies', () => {
     const view = createDetailView(mount, send, undefined, stores1);
     await view.load('UI-10');
 
-    // Switch to Dependencies tab
-    const depsTab = mount.querySelector('.detail-tab:last-child');
+    // Switch to Dependencies tab (second tab)
+    const depsTab = mount.querySelectorAll('.detail-tab')[1];
     depsTab?.dispatchEvent(new window.Event('click'));
     await Promise.resolve();
 
@@ -75,8 +75,8 @@ describe('views/detail dependencies', () => {
     const view = createDetailView(mount, send, undefined, stores2);
     await view.load('UI-20');
 
-    // Switch to Dependencies tab
-    const depsTab = mount.querySelector('.detail-tab:last-child');
+    // Switch to Dependencies tab (second tab)
+    const depsTab = mount.querySelectorAll('.detail-tab')[1];
     depsTab?.dispatchEvent(new window.Event('click'));
     await Promise.resolve();
 
@@ -114,8 +114,8 @@ describe('views/detail dependencies', () => {
     const view = createDetailView(mount, send, undefined, stores3);
     await view.load('UI-30');
 
-    // Switch to Dependencies tab
-    const depsTab = mount.querySelector('.detail-tab:last-child');
+    // Switch to Dependencies tab (second tab)
+    const depsTab = mount.querySelectorAll('.detail-tab')[1];
     depsTab?.dispatchEvent(new window.Event('click'));
     await Promise.resolve();
 
