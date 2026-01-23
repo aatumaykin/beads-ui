@@ -60,8 +60,8 @@
   /* Markdown code/pre */
   --code-bg: #f3f4f6;
   --code-fg: #111827;
-  --pre-bg: #0b1021;
-  --pre-fg: #e5e7eb;
+  --pre-bg: #f3f4f6;
+  --pre-fg: #111827;
 
   /* focus ring */
   --outline-offset-l: 6px;
@@ -1391,7 +1391,7 @@ input.inline-edit:focus {
 
     --code-bg: #1f2937;
     --code-fg: #e5e7eb;
-    --pre-bg: #0a0f1f;
+    --pre-bg: #1f2937;
     --pre-fg: #e5e7eb;
   }
 }
@@ -1439,7 +1439,7 @@ html[data-theme='dark'] {
 
   --code-bg: #1f2937;
   --code-fg: #e5e7eb;
-  --pre-bg: #0a0f1f;
+  --pre-bg: #1f2937;
   --pre-fg: #e5e7eb;
 }
 
@@ -1486,8 +1486,8 @@ html[data-theme='light'] {
 
   --code-bg: #f3f4f6;
   --code-fg: #1f2937;
-  --pre-bg: #0b1021;
-  --pre-fg: #e5e7eb;
+  --pre-bg: #f3f4f6;
+  --pre-fg: #1f2937;
 
   /* Light controls override to prevent dark OS bleed-through */
   --control-bg: #fff;
