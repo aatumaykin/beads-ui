@@ -1796,7 +1796,6 @@ export function createDetailView(
               ${active_tab === 'close_reason'
                 ? html`<div class="detail-tab-content close-reason">
                     <div class="props-card">
-                      <div class="props-card__title">Close Reason</div>
                       <div class="props-card__body">
                         ${edit_close_reason
                           ? html`<textarea
